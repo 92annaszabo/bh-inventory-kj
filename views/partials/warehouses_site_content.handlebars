@@ -1,0 +1,99 @@
+<div class="container-fluid">
+  {{> delete_warehouse_modal }}
+
+  {{#each warehouses}}
+  <div class="row mb-3">
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>{{this.name}}</h5>
+        </div>
+        <div class="card-body">
+          <h5 class="card-title">{{this.country}}</h5>
+          <p class="card-text">{{this.zip}}, {{this.city}}, {{this.streetAndhn}}</p>
+          <div class="container text-right">
+
+            <button type="button" class="btn btn-info btn-sm" data-whid="{{this.id}}" data-name="{{this.name}}"
+              data-country="{{this.country}}" data-zip="{{this.zip}}" data-city="{{this.city}}"
+              data-street="{{this.streetAndhn}}" onclick="update_warehouse()">Szerkesztés</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="delete_warehouse()" data-whid="{{this.id}}"
+              data-name="{{this.name}}" {{#unless this.canBeDeleted}}disabled{{/unless}}>Törlés</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="container h-100 map{{@index}}" data-js="map"
+          data-address="{{this.country}} {{this.zip}} {{this.city}} {{this.streetAndhn}}"></div>
+      </div>
+    </div>
+  </div>
+  {{/each}}
+</div>
+
+{{> footer }}
+
+<script>
+
+  function initMap() {
+    const mapContainers = document.querySelectorAll('div[data-js]');
+
+    for (const mapContainer of mapContainers) {
+      const mapConfig = {
+        zoom: 14
+      }
+
+      const geocoder = new google.maps.Geocoder();
+      const map = new google.maps.Map(mapContainer, mapConfig);
+
+      const address = mapContainer.dataset.address;
+
+      geocoder.geocode({ 'address': address }, function (results, status) {
+        if (status == 'OK') {
+          map.setCenter(results[0].geometry.location);
+          const marker = new google.maps.Marker({
+            map: map,
+            position: results[0].geometry.location
+          });
+        } else {
+          map.setCenter({ lat: 47.162494, lng: 19.5033041 });
+          map.setZoom(6);
+        }
+      });
+    }
+
+  }
+
+  function update_warehouse() {
+    const newWarehouseForm = document.querySelector('.new-warehouse');
+    const whId = event.target.dataset.whid;
+    const whName = event.target.dataset.name;
+    const whCountry = event.target.dataset.country;
+    const whZip = event.target.dataset.zip;
+    const whCity = event.target.dataset.city;
+    const whStreet = event.target.dataset.street;
+
+    newWarehouseForm.action = `/warehouses/${whId}`;
+    $('#new_warehouse').modal();
+
+    document.querySelector('#whName').value = whName;
+    document.querySelector('#whCountry').value = whCountry;
+    document.querySelector('#whZip').value = whZip;
+    document.querySelector('#whCity').value = whCity;
+    document.querySelector('#wh_street').value = whStreet;
+  }
+
+  function delete_warehouse() {
+    const whId = event.target.dataset.whid;
+    const whName = event.target.dataset.name;
+
+    const deleteForm = document.querySelector('.delete-wh');
+    deleteForm.action = `/warehouses/del/${whId}`
+    $('#delete_wh_modal').modal();
+    document.querySelector('.wh-name').textContent = whName;
+  }
+</script>
+
+<script async defer src="http://maps.googleapis.com/maps/api/js?key={{key}}&callback=initMap">
+</script>
